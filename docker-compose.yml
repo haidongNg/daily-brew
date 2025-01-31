@@ -1,0 +1,50 @@
+version: '3.7'
+
+services:
+  # Ứng dụng Golang
+#  app:
+#    build: .
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - DB_HOST=db
+#      - DB_PORT=5432
+#      - DB_USER=postgres
+#      - DB_PASSWORD=postgres
+#      - DB_NAME=dailybrewdb
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#    depends_on:
+#      - db
+#      - redis
+#    networks:
+#      - app-network
+
+  # PostgreSQL
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=dailybrewdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Redis
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
