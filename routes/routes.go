@@ -1,21 +1,21 @@
 package routes
 
 import (
-	"daily-brew/handlers"
-	"daily-brew/middleware"
+	"daily-brew/controllers"
+	"daily-brew/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/register", handlers.Register)
-	r.POST("/login", handlers.Login)
+	r.POST("/register", controllers.Register)
+	r.POST("/login", controllers.Login)
 
 	protected := r.Group("/")
-	protected.Use(middleware.AuthMiddleware())
+	protected.Use(middlewares.AuthMiddleware())
 	{
-		protected.POST("/refresh")
+		protected.POST("/refresh", controllers.RefreshToken)
 	}
 	return r
 }

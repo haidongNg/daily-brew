@@ -6,12 +6,15 @@ import (
 )
 
 type Config struct {
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBUser     string `mapstructure:"DB_USER"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBName     string `mapstructure:"DB_NAME"`
-	JWTSecret  string `mapstructure:"JWT_SECRET"`
-	ServerPort string `mapstructure:"SERVER_PORT"`
+	DBHost        string `mapstructure:"DB_HOST"`
+	DBUser        string `mapstructure:"DB_USER"`
+	DBPassword    string `mapstructure:"DB_PASSWORD"`
+	DBName        string `mapstructure:"DB_NAME"`
+	JWTSecret     string `mapstructure:"JWT_SECRET"`
+	ServerPort    string `mapstructure:"SERVER_PORT"`
+	RedisHost     string `mapstructure:"REDIS_HOST"`
+	RedisPort     string `mapstructure:"REDIS_PORT"`
+	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
 }
 
 var AppConfig *Config

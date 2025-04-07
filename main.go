@@ -2,7 +2,7 @@ package main
 
 import (
 	"daily-brew/config"
-	"daily-brew/model"
+	"daily-brew/models"
 	"daily-brew/routes"
 	"fmt"
 	"log"
@@ -14,7 +14,8 @@ import (
 func main() {
 	config.InitConfig()
 	config.InitDB()
-	config.DB.AutoMigrate(&model.Member{})
+	config.InitRedis()
+	config.DB.AutoMigrate(&models.Member{})
 	r := routes.SetupRoutes()
 	serverAddr := fmt.Sprintf("127.0.0.1:%s", config.AppConfig.ServerPort)
 	log.Printf("Server running on http://localhost%s\n", serverAddr)

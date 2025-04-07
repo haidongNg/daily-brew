@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"daily-brew/utils"
@@ -25,7 +25,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// Lưu user ID vào context để sử dụng ở các API khác
-		c.Set("user_id", claims.UserID)
+		c.Set("memberId", claims.MemberID)
 		c.Next()
 	}
 }

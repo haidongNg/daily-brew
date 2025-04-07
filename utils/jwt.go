@@ -3,17 +3,26 @@ package utils
 import (
 	"daily-brew/config"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"time"
 )
 
 type Claims struct {
-	UserID int `json:"user_id"`
+	MemberID       uint   `json:"memberId"`
+	Role           string `json:"role"`
+	RefreshTokenId string `json:"refreshTokenId"`
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID int) (string, error) {
+type ClaimsRefresh struct {
+	MemberID       uint      `json:"memberId"`
+	RefreshTokenId uuid.UUID `json:"refreshTokenId"`
+	jwt.RegisteredClaims
+}
+
+func GenerateAccessToken(MemberID uint) (string, error) {
 	claims := &Claims{
-		UserID: userID,
+		MemberID: MemberID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // Token 1 ngày
 		},
@@ -23,9 +32,10 @@ func GenerateAccessToken(userID int) (string, error) {
 	return token.SignedString([]byte(config.AppConfig.JWTSecret))
 }
 
-func GenerateRefreshToken(userID int) (string, error) {
-	claims := &Claims{
-		UserID: userID,
+func GenerateRefreshToken(MemberID uint, refreshTokenId uuid.UUID) (string, error) {
+	claims := &ClaimsRefresh{
+		MemberID:       MemberID,
+		RefreshTokenId: refreshTokenId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Token 7 ngày
 		},
