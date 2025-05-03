@@ -12,7 +12,7 @@ import (
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	Name     string `json:"name" binding:"required"`
+	FullName string `json:"fullName" binding:"required"`
 	Phone    string `json:"phone" binding:"required"`
 }
 
@@ -26,7 +26,7 @@ func Register(c *gin.Context) {
 	memberService := member_service.Member{
 		Email:    form.Email,
 		Password: form.Password,
-		Name:     form.Name,
+		FullName: form.FullName,
 		Phone:    form.Phone,
 	}
 
