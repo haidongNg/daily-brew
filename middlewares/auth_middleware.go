@@ -16,16 +16,25 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		tokenString := strings.Split(authHeader, "Bearer ")[1]
-		claims, err := utils.VerifyToken(tokenString)
-		if err != nil {
+		// Đảm bảo đúng định dạng "Bearer <token>"
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
 			c.Abort()
 			return
 		}
 
-		// Lưu user ID vào context để sử dụng ở các API khác
+		tokenString := parts[1]
+		claims, err := utils.VerifyAccessToken(tokenString)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			c.Abort()
+			return
+		}
+		/// Lưu claims vào context để các route sau có thể dùng
 		c.Set("memberId", claims.MemberID)
+		c.Set("role", claims.Role)
+		c.Set("refreshTokenId", claims.RefreshTokenId)
 		c.Next()
 	}
 }

@@ -49,28 +49,33 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Tìm user theo email
 	memberService := member_service.Member{
 		Email: request.Email,
 	}
-	// find by email
 	member, err := memberService.GetMemberByEmail()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
+	// Kiểm tra mật khẩu
 	if !utils.BcryptCheck(request.Password, member.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid credentials"})
 		return
 	}
+
+	// Tạo access & refresh token
 	var (
 		accessToken, refreshToken string
 	)
-	accessToken, refreshToken, err = authentication_service.GenerateTokens(member.ID)
+	accessToken, refreshToken, err = authentication_service.GenerateTokens(member.ID, member.Role)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate tokens"})
+		return
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
@@ -83,14 +88,13 @@ type RefreshTokenRequest struct {
 
 func RefreshToken(c *gin.Context) {
 	var request RefreshTokenRequest
-
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	// Xác thực refresh token
-	claims, err := utils.VerifyToken(request.RefreshToken)
+	claims, err := utils.VerifyRefreshToken(request.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
 		return
@@ -105,26 +109,29 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
+	// Kiểm tra refresh token có đúng trong Redis
 	isValid := models.Validate(member.ID, claims.RefreshTokenId)
 	if !isValid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token is invalid"})
 		return
 	}
 
+	// Xóa refresh token cũ để chống reuse
 	err = models.DeleteRefreshTokenFromRedis(member.ID)
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not invalidate old refresh token"})
 		return
 	}
 
+	// Sinh token mới
 	var (
 		accessToken, refreshToken string
 	)
-	accessToken, refreshToken, err = authentication_service.GenerateTokens(member.ID)
+	accessToken, refreshToken, err = authentication_service.GenerateTokens(member.ID, member.Role)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate new tokens"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"accessToken":  accessToken,

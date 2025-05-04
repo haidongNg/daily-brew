@@ -11,6 +11,7 @@ type Member struct {
 	FullName string
 	Phone    string
 	Password string
+	Role     string
 }
 
 func mapModelToService(m *models.Member) *Member {
@@ -20,6 +21,7 @@ func mapModelToService(m *models.Member) *Member {
 		Email:    m.Email,
 		Phone:    m.Phone,
 		Password: m.Password,
+		Role:     m.Role,
 	}
 }
 

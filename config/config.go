@@ -11,6 +11,7 @@ type Config struct {
 	DBPassword    string `mapstructure:"DB_PASSWORD"`
 	DBName        string `mapstructure:"DB_NAME"`
 	JWTSecret     string `mapstructure:"JWT_SECRET"`
+	JWTIssuer     string `mapstructure:"JWT_ISSUER"`
 	ServerPort    string `mapstructure:"SERVER_PORT"`
 	RedisHost     string `mapstructure:"REDIS_HOST"`
 	RedisPort     string `mapstructure:"REDIS_PORT"`

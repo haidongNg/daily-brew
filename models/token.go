@@ -3,9 +3,11 @@ package models
 import (
 	"daily-brew/config"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -43,9 +45,9 @@ func DeleteRefreshTokenFromRedis(memberId uint) error {
 	return nil
 }
 
-func Validate(memberId uint, refreshTokenId string) bool {
+func Validate(memberId uint, refreshTokenId uuid.UUID) bool {
 	storedId := config.RedisClient.Get(config.Ctx, GetKey(memberId)).Val()
-	if storedId != refreshTokenId {
+	if check := strings.Compare(storedId, refreshTokenId.String()); check != 0 {
 		return false
 	}
 	return true

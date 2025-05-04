@@ -2,15 +2,17 @@ package utils
 
 import (
 	"daily-brew/config"
+	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"time"
 )
 
 type Claims struct {
-	MemberID       uint   `json:"memberId"`
-	Role           string `json:"role"`
-	RefreshTokenId string `json:"refreshTokenId"`
+	MemberID       uint      `json:"memberId"`
+	Role           string    `json:"role"`
+	RefreshTokenId uuid.UUID `json:"refreshTokenId"`
 	jwt.RegisteredClaims
 }
 
@@ -20,11 +22,15 @@ type ClaimsRefresh struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(MemberID uint) (string, error) {
+func GenerateAccessToken(MemberID uint, refreshTokenId uuid.UUID, role string) (string, error) {
 	claims := &Claims{
-		MemberID: MemberID,
+		MemberID:       MemberID,
+		Role:           role,
+		RefreshTokenId: refreshTokenId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // Token 1 ngày
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    config.AppConfig.JWTIssuer,
 		},
 	}
 
@@ -38,6 +44,8 @@ func GenerateRefreshToken(MemberID uint, refreshTokenId uuid.UUID) (string, erro
 		RefreshTokenId: refreshTokenId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Token 7 ngày
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    config.AppConfig.JWTIssuer,
 		},
 	}
 
@@ -45,18 +53,48 @@ func GenerateRefreshToken(MemberID uint, refreshTokenId uuid.UUID) (string, erro
 	return token.SignedString([]byte(config.AppConfig.JWTSecret))
 }
 
-func VerifyToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.AppConfig.JWTSecret), nil
-	})
+// VerifyAccessToken kiểm tra và parse Access Token
+func VerifyAccessToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, keyFunc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("access token parse error: %w", err)
 	}
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		return nil, err
+		return nil, errors.New("invalid access token")
+	}
+
+	if claims.Issuer != config.AppConfig.JWTIssuer {
+		return nil, errors.New("invalid token issuer")
 	}
 
 	return claims, nil
+}
+
+// VerifyRefreshToken kiểm tra và parse Refresh Token
+func VerifyRefreshToken(tokenString string) (*ClaimsRefresh, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &ClaimsRefresh{}, keyFunc)
+	if err != nil {
+		return nil, fmt.Errorf("refresh token parse error: %w", err)
+	}
+
+	claims, ok := token.Claims.(*ClaimsRefresh)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	if claims.Issuer != config.AppConfig.JWTIssuer {
+		return nil, errors.New("invalid token issuer")
+	}
+
+	return claims, nil
+}
+
+// keyFunc dùng chung để kiểm tra thuật toán và trả về key
+func keyFunc(token *jwt.Token) (interface{}, error) {
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+	}
+	return []byte(config.AppConfig.JWTSecret), nil
 }
