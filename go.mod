@@ -10,7 +10,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	golang.org/x/crypto v0.37.0
 	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.26.0
+	gorm.io/gorm v1.26.1
 )
 
 require (
